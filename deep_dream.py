@@ -189,6 +189,7 @@ if __name__ == "__main__":
     parser.add_argument("--load_checkpoint")
     parser.add_argument("--vid", type= bool, default = False)
     parser.add_argument("--input_vid", type=str, help="path to input video")
+    parser.add_argument("--out", type=str, help="output path")
 
     args = parser.parse_args()
 
