@@ -125,7 +125,7 @@ def dump_frames(video_path, dump_dir):
 
 def create_video_from_intermediate_results(tmp_out, final_out, metadata=None):
     # save_and_maybe_display_image uses this same format (it's hardcoded there), not adaptive but does the job
-    img_pattern = os.path.join(tmp_out '%6d.jpg')
+    img_pattern = os.path.join(tmp_out, '%6d.jpg')
     fps = 5 if metadata is None else metadata['fps']
     first_frame = 0
     number_of_frames_to_process = len(valid_frames(tmp_out))  # default - don't trim process every frame
@@ -147,7 +147,8 @@ def create_video_from_intermediate_results(tmp_out, final_out, metadata=None):
 def linear_blend(img1, img2, alpha=0.5):
     return img1 + alpha * (img2 - img1)
 
-def deep_dream_video(vid_path, out, model, iterations, lr, octave_scale, num_octaves,  blend= 0.85):
+def deep_dream_video(vid_path, out, model, iterations, lr, octave_scale, num_octaves, max_frame, blend= 0.85):
+    print('Max Frame:{}'.format(max_frame))
     #video_path = os.path.join(vid_path, config['input'])
     tmp_input_dir = os.path.join(out, 'tmp_input')
     tmp_output_dir = os.path.join(out, 'tmp_out')
@@ -171,8 +172,10 @@ def deep_dream_video(vid_path, out, model, iterations, lr, octave_scale, num_oct
         dreamed_frame = deep_dream(frame, model, iterations, lr, octave_scale, num_octaves)
         last_img = dreamed_frame
         save_and_maybe_display_image(tmp_output_dir, dreamed_frame, name_modifier=frame_id)
+        if frame_id == max_frame:
+            break
 
-    create_video_from_intermediate_results(tmp_output_dir, final_out, metadata)
+    create_video_from_intermediate_results(tmp_output_dir, final_output_dir, metadata)
 
     shutil.rmtree(tmp_input_dir)  # remove tmp files
     print(f'Deleted tmp frame dump directory {tmp_input_dir}.')
@@ -190,11 +193,10 @@ if __name__ == "__main__":
     parser.add_argument("--vid", type= bool, default = False)
     parser.add_argument("--input_vid", type=str, help="path to input video")
     parser.add_argument("--out", type=str, help="output path")
+    parser.add_argument("--max_frame", type=str, help="maximum frame for video")
 
     args = parser.parse_args()
 
-    # Load image
-    image = Image.open(args.input_image)
 
     # Define the model
     #model instantiation
@@ -214,10 +216,13 @@ if __name__ == "__main__":
         args.iterations, 
         args.lr,
         args.octave_scale, 
-        args.num_octaves)
+        args.num_octaves,
+        args.max_frame)
 
         exit()
 
+    # Load image
+    image = Image.open(args.input_image)
     # Extract deep dream image
     dreamed_image = deep_dream(
         image,
